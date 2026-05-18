@@ -1,0 +1,203 @@
+<!-- CODE 1 AVEC FICHIER JSON
+ 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Process IA - Transit & Douane</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 40px; background-color: #f4f6f9; color: #333; }
+    .container { max-width: 500px; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin: auto; }
+    h2 { text-align: center; color: #0056b3; margin-bottom: 20px; }
+    label { font-weight: bold; display: block; margin-bottom: 5px; }
+    input, select, button { width: 100%; padding: 12px; margin-bottom: 20px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; font-size: 14px; }
+    button { background-color: #0056b3; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+    button:hover { background-color: #004085; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Système d'aide à la décision - CAMCIS</h2>
+  <form action="/submit" method="post" enctype="multipart/form-data">
+    <label for="name">Identifiant de l'Agent</label>
+    <input type="text" id="name" name="name" placeholder="Ex: Agent Transit Noun" required>
+
+    <label for="type">Type de procédure</label>
+    <select id="type" name="type">
+      <option value="customs">Mise en consommation directe (D11)</option>
+      <option value="customs_transit">Transit international (S105)</option>
+      <option value="bank">Ouverture de Crédit Documentaire (Banque)</option>
+    </select>
+
+    <label for="document">Téléverser les documents (Facture / BL / Packing List)</label>
+    <input type="file" id="document" name="document" required>
+
+    <button type="submit">Lancer l'analyse automatique</button>
+  </form>
+</div>
+
+</body>
+</html>-->
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Digital Process IA - Tableau de Bord Transit</title>
+  <style>
+    :root {
+      --primary: #0056b3;
+      --success: #28a745;
+      --warning: #ffc107;
+      --dark: #212529;
+      --bg: #f4f6f9;
+    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: var(--bg); color: var(--dark); }
+    .main-container { max-width: 1100px; margin: auto; display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+    .sidebar { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: fit-content; }
+    h2 { color: var(--primary); margin-top: 0; font-size: 20px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
+    label { font-weight: bold; display: block; margin: 15px 0 5px 0; font-size: 13px; }
+    input, select, button { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 14px; }
+    button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 20px; transition: background 0.3s; }
+    button:hover { background-color: #004085; }
+    .dashboard { display: none; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .loader { display: none; text-align: center; padding: 50px; font-weight: bold; color: var(--primary); }
+    .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; }
+    .kpi-card { background: var(--bg); padding: 15px; border-radius: 6px; border-left: 4px solid var(--primary); }
+    .kpi-title { font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: bold; }
+    .kpi-value { font-size: 16px; font-weight: bold; margin-top: 5px; }
+    .ia-banner { padding: 15px; border-radius: 6px; margin-bottom: 25px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 14px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+    th { background-color: #f8f9fa; color: #495057; font-weight: bold; }
+    .text-right { text-align: right; }
+    .total-row { font-weight: bold; background-color: #e9ecef; }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+  <div class="sidebar">
+    <h2>Pré-Saisie Assistée</h2>
+    <form id="transitForm">
+      <label for="name">Identifiant de l'Agent</label>
+      <input type="text" id="name" name="name" placeholder="Ex: TCHATA MARIUS" required>
+      <label for="document">Dossier Numérique (PDF)</label>
+      <input type="file" id="document" name="document" accept=".pdf" required>
+      <button type="submit">Analyser & Liquider</button>
+    </form>
+  </div>
+
+  <div class="right-panel">
+    <div id="loader" class="loader">🧠 Analyse OCR & Contrôle de conformité IA en cours...</div>
+    
+    <div id="dashboard" class="dashboard">
+      <h2>Résultat de la Liquidation Pré-CAMCIS</h2>
+      
+      <div id="iaBanner" class="ia-banner">
+        <div>MOTEUR IA : <span id="iaStatusText"></span></div>
+        <div>Score : <span id="iaScoreText"></span></div>
+      </div>
+
+      <div class="kpi-container">
+        <div class="kpi-card"><div class="kpi-title">Importateur Détecté</div><div id="kpiImportateur" class="kpi-value">-</div></div>
+        <div class="kpi-card"><div class="kpi-title">Référence Facture</div><div id="kpiFacture" class="kpi-value">-</div></div>
+        <div class="kpi-card"><div class="kpi-title">Colis / Poids Brut</div><div id="kpiLogistique" class="kpi-value">-</div></div>
+      </div>
+
+      <h3>Calcul de l'Assiette de Valeur en Douane (CAF)</h3>
+      <table style="margin-bottom: 25px;">
+        <thead><tr><th>Élément Énuméré</th><th class="text-right">Montant</th></tr></thead>
+        <tbody>
+          <tr><td>Valeur FOB (Marchandises brutes)</td><td id="tableFob" class="text-right">-</td></tr>
+          <tr><td>Frais de Fret Maritime Détectés</td><td id="tableFret" class="text-right">-</td></tr>
+          <tr><td>Frais d'Assurance Transport Détectés</td><td id="tableAssurance" class="text-right">-</td></tr>
+          <tr class="total-row"><td>Valeur CAF Globale (Assiette en FCFA)</td><td id="tableCafCfa" class="text-right">-</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Détails des Droits & Taxes par Position Tarifaire CEMAC</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Code SH</th>
+            <th>Description Marchandise</th>
+            <th class="text-right">Valeur CAF (FCFA)</th>
+            <th class="text-right">Droit de Douane (DDI)</th>
+            <th class="text-right">TVA + Taxes Annexes</th>
+          </tr>
+        </thead>
+        <tbody id="liquidationRows"></tbody>
+        <tfoot>
+          <tr class="total-row" style="background-color: #d6d8db;">
+            <td colspan="4">TOTAL GÉNÉRAL À LIQUIDER (FCFA)</td>
+            <td id="grandTotalTaxes" class="text-right">-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.getElementById('transitForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const loader = document.getElementById('loader');
+    const dashboard = document.getElementById('dashboard');
+    
+    loader.style.display = 'block';
+    dashboard.style.display = 'none';
+    
+    try {
+      const response = await fetch('/submit', {
+        method: 'POST',
+        body: new FormData(document.getElementById('transitForm'))
+      });
+      
+      const data = await response.json();
+      loader.style.display = 'none';
+      
+      if (response.ok && data.statut_traitement === "Succès") {
+        dashboard.style.display = 'block';
+        
+        document.getElementById('iaStatusText').innerText = data.moteur_decisionnel_ia.recommandation;
+        document.getElementById('iaScoreText').innerText = (data.moteur_decisionnel_ia.score_conformite_dossier * 100) + "%";
+        
+        document.getElementById('kpiImportateur').innerText = data.metadata.importateur;
+        document.getElementById('kpiFacture').innerText = data.metadata.facture_reference;
+        document.getElementById('kpiLogistique').innerText = data.donnees_logistiques.nombre_colis_detectes + " Colis / " + data.donnees_logistiques.poids_brut_total_kg.toLocaleString() + " Kg";
+        
+        document.getElementById('tableFob').innerText = data.assiette_fiscale.total_fob_eur.toLocaleString() + " €";
+        document.getElementById('tableFret').innerText = data.assiette_fiscale.total_fret_eur.toLocaleString() + " €";
+        document.getElementById('tableAssurance').innerText = data.assiette_fiscale.total_assurance_eur.toLocaleString() + " €";
+        document.getElementById('tableCafCfa').innerText = data.assiette_fiscale.assiette_valeur_caf_cfa.toLocaleString('fr-FR') + " FCFA";
+        
+        const tbody = document.getElementById('liquidationRows');
+        tbody.innerHTML = ""; 
+        
+        data.liquidation_douaniere_camcis.details_par_position.forEach(item => {
+          tbody.innerHTML += `<tr>
+            <td><strong>${item.code_sh}</strong></td>
+            <td>${item.description}</td>
+            <td class="text-right">${item.valeur_caf_item_cfa.toLocaleString('fr-FR')}</td>
+            <td class="text-right" style="color: #721c24;">${item.droit_douane.toLocaleString('fr-FR')}</td>
+            <td class="text-right" style="color: #155724;">${item.tva.toLocaleString('fr-FR')} (TVA) + ${item.rubriques_annexes.toLocaleString('fr-FR')}</td>
+          </tr>`;
+        });
+        
+        document.getElementById('grandTotalTaxes').innerText = data.facturation_globale_estimee_cfa.toLocaleString('fr-FR') + " FCFA";
+      } else {
+        alert("Erreur : " + data.erreur);
+      }
+    } catch (error) {
+      loader.style.display = 'none';
+      alert("Erreur réseau : " + error.message);
+    }
+  });
+</script>
+</body>
+</html>
+
