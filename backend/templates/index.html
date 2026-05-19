@@ -394,14 +394,15 @@
         }
         
         document.getElementById('kpiImportateur').innerText = data.metadata.importateur || "-";
-        document.getElementById('kpiFacture').innerText = "Banque: " + (data.metadata.banque_detectee || "-");
+        document.getElementById('kpiFacture').innerText = "Banque: " + (data.metadata.banque_detectee || "Non détectée") + " / Transitaire: " + data.metadata.agent_operationnel;
         document.getElementById('kpiLogistique').innerText = (data.donnees_logistiques.nombre_colis_detectes || 0) + " Colis / Port: " + (data.metadata.port || "-");
         
         const baseCaf = data.assiette_fiscale.assiette_valeur_caf_cfa || 0;
-        document.getElementById('tableFob').innerText = data.assiette_fiscale.total_fob_eur ? data.assiette_fiscale.total_fob_eur.toLocaleString() + " €" : "Analysé par l'IA";
-        document.getElementById('tableFret').innerText = data.assiette_fiscale.total_fret_eur ? data.assiette_fiscale.total_fret_eur.toLocaleString() + " €" : "Traité";
-        document.getElementById('tableAssurance').innerText = data.assiette_fiscale.total_assurance_eur ? data.assiette_fiscale.total_assurance_eur.toLocaleString() + " €" : "Certifié";
-        document.getElementById('tableCafCfa').innerText = baseCaf.toLocaleString('fr-FR') + " FCFA";
+        document.getElementById('tableFob').innerText = data.assiette_fiscale.total_fob_eur.toLocaleString('fr-FR') + " €";
+        document.getElementById('tableFret').innerText = data.assiette_fiscale.total_fret_eur.toLocaleString('fr-FR') + " €";
+        document.getElementById('tableAssurance').innerText = data.assiette_fiscale.total_assurance_eur.toLocaleString('fr-FR') + " €";
+        document.getElementById('tableCafCfa').innerText = data.assiette_fiscale.assiette_valeur_caf_cfa.toLocaleString('fr-FR') + " FCFA";
+
         
         const tbody = document.getElementById('liquidationRows');
         tbody.innerHTML = ""; 
