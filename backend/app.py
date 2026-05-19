@@ -1014,7 +1014,7 @@ def submit():
     
     # Récupération dynamique de variables manuelles si l'agent souhaite écraser l'OCR
     importateur_manuel = request.form.get("importateur_input", "").strip()
-    banque manuelle = request.form.get("banque_input", "").strip()
+    banque_manuelle = request.form.get("banque_input", "").strip()
 
     if 'document' not in request.files:
         return jsonify({"erreur": "Aucun document"}), 400
@@ -1028,7 +1028,7 @@ def submit():
         
         # Si l'agent a fait une saisie manuelle dans le formulaire, elle remplace l'OCR
         if importateur_manuel: liasse["importateur_camcis"] = importateur_manuel
-        if banque manuelle: liasse["banque_domiciliation"] = banque manuelle
+        if banque_manuelle: liasse["banque_domiciliation"] = banque_manuelle
 
         # --- MACHINE LEARNING : CHARGEMENT DU MODÈLE DE PRÉDICTION SH ---
         try:

@@ -41,7 +41,7 @@
 </body>
 </html>-->
 
-<!DOCTYPE html>
+<!--DOCTYPE html
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -199,5 +199,246 @@
   });
 </script>
 </body>
-</html>
+</html>-->
 
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CamTransit-IA - Tableau de Bord Dynamique</title>
+  <style>
+    :root {
+      --primary: #0056b3;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --dark: #212529;
+      --bg: #f4f6f9;
+    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: var(--bg); color: var(--dark); }
+    .main-container { max-width: 1200px; margin: auto; display: grid; grid-template-columns: 360px 1fr; gap: 20px; }
+    
+    .sidebar { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); height: fit-content; }
+    h2 { color: var(--primary); margin-top: 0; font-size: 20px; border-bottom: 2px solid var(--bg); padding-bottom: 10px; }
+    label { font-weight: bold; display: block; margin: 15px 0 5px 0; font-size: 13px; }
+    input, select, button { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box; font-size: 14px; margin-bottom: 5px; }
+    button { background-color: var(--primary); color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 25px; transition: background 0.3s; }
+    button:hover { background-color: #004085; }
+    
+    .right-panel { display: flex; flex-direction: column; }
+    .dashboard { display: none; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .loader { display: none; background: #e3f2fd; color: #0d47a1; border-left: 5px solid #2196f3; padding: 20px; border-radius: 6px; font-weight: bold; font-size: 15px; margin-bottom: 20px; text-align: center; }
+    
+    .kpi-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px; margin-top: 15px; }
+    .kpi-card { background: var(--bg); padding: 15px; border-radius: 6px; border-left: 4px solid var(--primary); }
+    .kpi-title { font-size: 12px; color: #6c757d; text-transform: uppercase; font-weight: bold; }
+    .kpi-value { font-size: 14px; font-weight: bold; margin-top: 5px; word-break: break-word; }
+    
+    .ia-banner { padding: 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+    .ia-banner.status-ok { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .ia-banner.status-warn { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; margin-bottom: 30px; font-size: 14px; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #dee2e6; }
+    th { background-color: #f8f9fa; color: #495057; font-weight: bold; }
+    tr:hover { background-color: #f1f3f5; }
+    .text-right { text-align: right; }
+    .total-row { font-weight: bold; background-color: #e9ecef; }
+    h3 { color: var(--primary); margin-top: 25px; font-size: 16px; border-bottom: 1px solid #dee2e6; padding-bottom: 5px; }
+  </style>
+</head>
+<body>
+
+<div class="main-container">
+  
+  <div class="sidebar">
+    <h2>Pré-Saisie Assistée V2</h2>
+    <form id="transitForm">
+      <label for="name">Identifiant de l'Agent</label>
+      <input type="text" id="name" name="name" placeholder="Ex: TCHATA MARIUS" required>
+
+      <label for="importateur_input">Nom de l'Importateur (Optionnel)</label>
+      <input type="text" id="importateur_input" name="importateur_input" placeholder="Laisser vide pour OCR automatique">
+
+      <label for="banque_input">Banque de Règlement (Optionnel)</label>
+      <input type="text" id="banque_input" name="banque_input" placeholder="Ex: AFRILAND FIRST BANK">
+
+      <label for="document">Liasse Documentaire (PDF)</label>
+      <input type="file" id="document" name="document" accept=".pdf" required>
+
+      <button type="submit">Lancer le Triple Audit IA</button>
+    </form>
+  </div>
+
+  <div class="right-panel">
+    <div id="loader" class="loader">🧠 Analyse OCR Multi-Systèmes & Contrôle Cross-Checking IA en cours...</div>
+    
+    <div id="dashboard" class="dashboard">
+      <h2 style="color: var(--dark); border-bottom: 2px solid var(--primary); padding-bottom: 10px; margin-bottom: 20px;">Résultat de la Liquidation Pré-CAMCIS</h2>
+      
+      <div id="iaBanner" class="ia-banner">
+        <div>MOTEUR IA : <span id="iaStatusText"></span></div>
+        <div>Score : <span id="iaScoreText"></span></div>
+      </div>
+
+      <div id="alertZone"></div>
+
+      <div class="kpi-container">
+        <div class="kpi-card">
+          <div class="kpi-title">Importateur Détecté</div>
+          <div id="kpiImportateur" class="kpi-value">-</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Flux Financier</div>
+          <div id="kpiFacture" class="kpi-value">-</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-title">Logistique Échantillon</div>
+          <div id="kpiLogistique" class="kpi-value">-</div>
+        </div>
+      </div>
+
+      <h3>Calcul de l'Assiette de Valeur en Douane (CAF)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Élément Énuméré (Nomenclature Logistique)</th>
+            <th class="text-right">Statut de Traitement Numérique</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Valeur FOB (Marchandises brutes)</td><td id="tableFob" class="text-right">-</td></tr>
+          <tr><td>Frais de Fret Maritime Détectés</td><td id="tableFret" class="text-right">-</td></tr>
+          <tr><td>Frais d'Assurance Transport Détectés</td><td id="tableAssurance" class="text-right">-</td></tr>
+          <tr class="total-row"><td>Valeur CAF Globale (Assiette Douanière Convertie)</td><td id="tableCafCfa" class="text-right">-</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Détails des Droits & Taxes par Position Tarifaire CEMAC</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Code SH</th>
+            <th>Description Marchandise</th>
+            <th class="text-right">Valeur CAF (FCFA)</th>
+            <th class="text-right">Droit de Douane (DDI)</th>
+            <th class="text-right">TVA (17.5% s/ CAF+DD) + Annexes</th>
+          </tr>
+        </thead>
+        <tbody id="liquidationRows"></tbody>
+        <tfoot>
+          <tr class="total-row" style="background-color: #f8f9fa;">
+            <td colspan="4">Droits et Taxes Douane Pure (Case 61)</td>
+            <td id="totalPureDouane" class="text-right">-</td>
+          </tr>
+          <tr class="total-row" style="background-color: #f8f9fa;">
+            <td colspan="4">Forfait Rubriques et Centimes Additionnels (Case 62)</td>
+            <td id="totalRubriques" class="text-right">-</td>
+          </tr>
+          <tr id="totalTaxesRow" class="total-row" style="background-color: #d6d8db; color: #1b1e21; font-size: 15px;">
+            <td colspan="4">TAXE TOTALE À PAYER À LA CAISSE DE L'ÉTAT (Case 65)</td>
+            <td id="grandTotalTaxes" class="text-right">-</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  document.getElementById('transitForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const form = document.getElementById('transitForm');
+    const loader = document.getElementById('loader');
+    const dashboard = document.getElementById('dashboard');
+    const alertZone = document.getElementById('alertZone');
+    
+    loader.style.display = 'block';
+    dashboard.style.display = 'none';
+    alertZone.innerHTML = "";
+    
+    try {
+      const response = await fetch('/submit', {
+        method: 'POST',
+        body: new FormData(form)
+      });
+      
+      const data = await response.json();
+      loader.style.display = 'none';
+      
+      if (response.ok && data.statut_traitement === "Succès") {
+        dashboard.style.display = 'block';
+        
+        const iaBanner = document.getElementById('iaBanner');
+        document.getElementById('iaStatusText').innerText = data.moteur_decisionnel_ia.recommandation || "-";
+        document.getElementById('iaScoreText').innerText = Math.round((data.moteur_decisionnel_ia.score_conformite_dossier || 0) * 100) + "%";
+        
+        if (data.moteur_decisionnel_ia.score_conformite_dossier === 1.0) {
+          iaBanner.className = "ia-banner status-ok";
+        } else {
+          iaBanner.className = "ia-banner status-warn";
+        }
+
+        if (data.moteur_decisionnel_ia.alertes_bloquantes && data.moteur_decisionnel_ia.alertes_bloquantes.length > 0) {
+          let alertesHTML = `<div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 25px; font-size: 13px; border-left: 5px solid var(--danger); line-height: 1.6;">
+            <h4 style="margin-top:0; margin-bottom:10px; font-size: 14px;">⚠️ Litiges et Écarts Documentaires Interceptés par l'IA :</h4>
+            <ul style="margin:0; padding-left:20px;">`;
+          data.moteur_decisionnel_ia.alertes_bloquantes.forEach(alerte => {
+            alertesHTML += `<li style="margin-bottom:5px;">${alerte}</li>`;
+          });
+          alertesHTML += `</ul></div>`;
+          alertZone.innerHTML = alertesHTML;
+        }
+        
+        document.getElementById('kpiImportateur').innerText = data.metadata.importateur || "-";
+        document.getElementById('kpiFacture').innerText = "Banque: " + (data.metadata.banque_detectee || "-");
+        document.getElementById('kpiLogistique').innerText = (data.donnees_logistiques.nombre_colis_detectes || 0) + " Colis / Port: " + (data.metadata.port || "-");
+        
+        const baseCaf = data.assiette_fiscale.assiette_valeur_caf_cfa || 0;
+        document.getElementById('tableFob').innerText = data.assiette_fiscale.total_fob_eur ? data.assiette_fiscale.total_fob_eur.toLocaleString() + " €" : "Analysé par l'IA";
+        document.getElementById('tableFret').innerText = data.assiette_fiscale.total_fret_eur ? data.assiette_fiscale.total_fret_eur.toLocaleString() + " €" : "Traité";
+        document.getElementById('tableAssurance').innerText = data.assiette_fiscale.total_assurance_eur ? data.assiette_fiscale.total_assurance_eur.toLocaleString() + " €" : "Certifié";
+        document.getElementById('tableCafCfa').innerText = baseCaf.toLocaleString('fr-FR') + " FCFA";
+        
+        const tbody = document.getElementById('liquidationRows');
+        tbody.innerHTML = ""; 
+        
+        if (data.liquidation_douaniere_camcis.details_par_position) {
+          data.liquidation_douaniere_camcis.details_par_position.forEach(item => {
+            const cafItem = item.valeur_caf_item_cfa || 0;
+            const ddItem = item.droit_douane || 0;
+            const taxAnnexes = item.rubriques_annexes || 0;
+            const tvaItem = item.tva || 0;
+
+            tbody.innerHTML += `<tr>
+              <td><strong>${item.code_sh || "-"}</strong></td>
+              <td>${item.description || "-"}</td>
+              <td class="text-right">${cafItem.toLocaleString('fr-FR')}</td>
+              <td class="text-right" style="color: #721c24;">${ddItem.toLocaleString('fr-FR')}</td>
+              <td class="text-right" style="color: #155724;">${tvaItem.toLocaleString('fr-FR')} (TVA) + ${taxAnnexes.toLocaleString('fr-FR')}</td>
+            </tr>`;
+          });
+        }
+        
+        const pureDouane = data.liquidation_douaniere_camcis.total_droits_douane_pure_cfa || 0;
+        const rubriquesAnnexes = data.liquidation_douaniere_camcis.total_rubriques_et_centimes_cfa || 0;
+        const totalGeneral = data.facturation_globale_estimee_cfa || 0;
+
+        document.getElementById('totalPureDouane').innerText = pureDouane.toLocaleString('fr-FR') + " FCFA";
+        document.getElementById('totalRubriques').innerText = rubriquesAnnexes.toLocaleString('fr-FR') + " FCFA";
+        document.getElementById('grandTotalTaxes').innerText = totalGeneral.toLocaleString('fr-FR') + " FCFA";
+        
+      } else {
+        alert("Erreur Moteur V2 : " + (data.erreur || "Problème d'exécution interne"));
+      }
+    } catch (error) {
+      loader.style.display = 'none';
+      alert("Erreur critique de connexion réseau : " + error.message);
+    }
+  });
+</script>
+</body>
+</html>
