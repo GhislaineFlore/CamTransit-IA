@@ -1,26 +1,42 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
 import joblib
 
-# 1. Charger l'historique des provisoires extraits
-# Ce fichier contient deux colonnes : 'description_facture' et 'code_sh_valide'
-data = pd.read_csv("historique_provisoires_camcis.csv")
+# 1. CORRECTION V3 : Charger le nouveau fichier CSV unifié et multi-systèmes
+data = pd.read_csv("historique_prov_besc_guce.csv")
 
-X = data['description_facture']  # Le texte de la facture (Ex: "IACM 36KV circuit breaker")
-y = data['code_sh_valide']       # La bonne décision prise par l'humain (Ex: "85353000")
+# ==========================================
+# MOTEUR IA 1 : CLASSIFICATION DU CODE SH (Texte)
+# ==========================================
+X_texte = data['description_facture']
+y_sh = data['code_sh_valide']
 
-# 2. Vectorisation (Transformer le texte en nombres compréhensibles par l'IA)
 vectorizer = TfidfVectorizer()
-X_numerique = vectorizer.fit_transform(X)
+X_texte_num = vectorizer.fit_transform(X_texte)
 
-# 3. Choix et Entraînement du modèle (Algorithme Random Forest)
-model_ia = RandomForestClassifier(n_estimators=100)
-model_ia.fit(X_numerique, y)
+model_sh = RandomForestClassifier(n_estimators=50, random_state=42)
+model_sh.fit(X_texte_num, y_sh)
 
-# 4. Sauvegarder l'IA entraînée dans des fichiers physiques fichiers .pkl
-joblib.dump(model_ia, 'moteur_prediction_sh.pkl')
+# ==========================================
+# MOTEUR IA 2 : DÉTECTION DE FRAUDE ET LITIGES (Numérique)
+# ==========================================
+# L'IA compare si les noms matchent (1 si oui, 0 si non) et l'écart de colis
+# Ces données proviennent dynamiquement des dossiers CAMCIS, GUCE et BESC
+data['match_importateur'] = (data['imp_camcis'] == data['imp_guce']).astype(int)
+data['ecart_colis'] = abs(data['colis_camcis'] - data['colis_besc'])
+
+X_fraude = data[['match_importateur', 'ecart_colis']]
+y_fraude = data['est_fraude']
+
+model_fraude = RandomForestClassifier(n_estimators=30, random_state=42)
+model_fraude.fit(X_fraude, y_fraude)
+
+# ==========================================
+# SAUVEGARDE DES TROIS CERVEAUX COMPACTS (.pkl)
+# ==========================================
+joblib.dump(model_sh, 'moteur_prediction_sh.pkl')
 joblib.dump(vectorizer, 'vectoriseur_texte.pkl')
+joblib.dump(model_fraude, 'moteur_detection_fraude.pkl')
 
-print("🧠 IA entraînée avec succès d'après l'historique de l'agence !")
+print("🧠 IA V3 Multi-Systèmes entraînée avec succès (CAMCIS + BESC + GUCE) !")
